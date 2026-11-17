@@ -1,74 +1,158 @@
-<!doctype html>
+
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#090b16">
-  <title>AYRA — Your Personal AI</title>
-  <link rel="manifest" href="manifest.json">
-  <style>
-    :root{color-scheme:dark;--bg:#090b16;--panel:#12172a;--line:#29314c;--text:#f4f5ff;--muted:#a5acc8;--accent:#9b8cff;--cyan:#66d9ef}
-    *{box-sizing:border-box} body{margin:0;background:radial-gradient(circle at 50% 0%,#24204a 0,var(--bg) 48%);color:var(--text);font:16px system-ui,-apple-system,Segoe UI,sans-serif;min-height:100vh}
-    .wrap{max-width:720px;margin:auto;padding:22px 16px 30px}.top{text-align:center;padding:18px 0 22px}
-    .orb{width:84px;height:84px;border-radius:50%;margin:0 auto 12px;background:radial-gradient(circle at 35% 30%,#fff 0,#b9aaff 10%,#7359e8 38%,#25265e 72%);box-shadow:0 0 35px #927bff88, inset 0 0 18px #fff8}
-    h1{font-size:34px;letter-spacing:5px;margin:0}.tag{color:var(--muted);margin-top:5px;font-size:13px;letter-spacing:1.5px}
-    .status{display:inline-block;margin-top:14px;padding:6px 11px;border:1px solid var(--line);border-radius:20px;color:var(--cyan);font-size:12px}
-    .chat{background:#0e1323cc;border:1px solid var(--line);border-radius:20px;min-height:300px;padding:14px;display:flex;flex-direction:column;gap:12px}
-    .msg{max-width:88%;padding:11px 13px;border-radius:15px;line-height:1.45;white-space:pre-wrap}.bot{background:var(--panel);border:1px solid #252d48;align-self:flex-start}.user{background:#51449a;align-self:flex-end}
-    .hint{color:var(--muted);font-size:12px;text-align:center;margin:12px 0}
-    .entry{display:flex;gap:8px;margin-top:12px}.entry input{min-width:0;flex:1;background:#11172a;border:1px solid var(--line);border-radius:14px;padding:14px;color:var(--text);font:inherit}
-    button{border:0;border-radius:14px;padding:0 15px;background:#7664df;color:white;font-weight:650;font-size:14px;min-height:48px}
-    button.secondary{background:#202944;border:1px solid var(--line)}button:disabled{opacity:.5}
-    .tools{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:10px}
-    .note{margin-top:16px;background:#11172a;border:1px solid var(--line);padding:13px;border-radius:15px;color:var(--muted);font-size:13px;line-height:1.5}
-    .note strong{color:var(--text)} footer{text-align:center;color:#777f9e;font-size:11px;margin-top:20px}
-    @media(max-width:420px){.entry{flex-wrap:wrap}.entry input{flex-basis:100%}.entry button{flex:1}.tools{grid-template-columns:1fr 1fr}}
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#050507">
+<title>AYRA AI</title>
+<style>
+*{box-sizing:border-box}
+body{
+ margin:0;background:#050507;color:white;
+ font-family:Arial,sans-serif;
+ height:100dvh;overflow:hidden;
+}
+header{text-align:center;padding:20px}
+header h2{color:#ff3434;letter-spacing:5px;margin:0}
+header p{color:#777;font-size:12px}
+.stage{
+ height:48vh;display:flex;
+ align-items:center;justify-content:center;
+ position:relative;
+}
+.core{
+ width:90px;height:90px;border-radius:50%;
+ background:radial-gradient(circle at 35% 30%,#ffaaaa,#ff2525 35%,#700000 75%);
+ box-shadow:0 0 25px #ff1717,0 0 70px #9d0000;
+ animation:pulse 2s infinite alternate;
+ z-index:2;
+}
+.orbit{
+ position:absolute;border:1px solid #ff343477;
+ border-radius:50%;
+ width:190px;height:75px;
+ animation:spin 4s linear infinite;
+}
+.orbit.two{width:220px;height:100px;transform:rotate(60deg);animation:spin2 5s linear infinite}
+.orbit.three{width:220px;height:100px;transform:rotate(-60deg);animation:spin3 6s linear infinite}
+.atom{
+ position:absolute;width:12px;height:12px;
+ border-radius:50%;background:#ff3434;
+ box-shadow:0 0 15px #ff2020;
+ top:50%;left:0;transform:translate(-50%,-50%);
+}
+@keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+@keyframes spin2{from{transform:rotate(60deg)}to{transform:rotate(420deg)}}
+@keyframes spin3{from{transform:rotate(-60deg)}to{transform:rotate(300deg)}}
+@keyframes pulse{from{transform:scale(.95)}to{transform:scale(1.08)}}
+#chat{
+ height:25vh;overflow-y:auto;padding:10px 18px;
+}
+.msg{padding:10px 14px;border-radius:14px;
+ margin:8px 0;max-width:85%;white-space:pre-wrap;line-height:1.4}
+.user{background:#551515;margin-left:auto}
+.bot{background:#19191e}
+#status{text-align:center;color:#888;font-size:12px}
+footer{
+ position:absolute;bottom:0;width:100%;
+ display:flex;gap:8px;padding:12px;
+ background:#0d0d11;
+}
+input{
+ flex:1;min-width:0;background:#19191e;
+ border:1px solid #444;color:white;
+ padding:14px;border-radius:25px;font-size:15px;
+}
+button{
+ border:0;border-radius:50%;width:48px;height:48px;
+ background:#d71919;color:white;font-size:20px;
+}
+</style>
 </head>
 <body>
-<main class="wrap">
-  <header class="top">
-    <div class="orb" aria-hidden="true"></div>
-    <h1>AYRA</h1><div class="tag">SMART · LOYAL · PERSONAL</div>
-    <div class="status" id="status">● Starter mode</div>
-  </header>
-  <section class="chat" id="chat" aria-live="polite">
-    <div class="msg bot">హాయ్! నేను AYRA. ❤️\nఇది మన personal AI app మొదటి version.\n\nఇప్పటికి chat interface, local memory, voice input/output సిద్ధంగా ఉన్నాయి. Online AI brainని తర్వాత సురక్షితంగా connect చేద్దాం.</div>
-  </section>
-  <div class="hint">Starter version · Internet AI connection not added yet</div>
-  <div class="entry">
-    <input id="message" placeholder="AYRAతో మాట్లాడండి..." autocomplete="off">
-    <button id="send">Send</button>
-    <button class="secondary" id="mic" title="Speak">🎙️</button>
-  </div>
-  <div class="tools">
-    <button class="secondary" id="remember">🧠 Save a memory</button>
-    <button class="secondary" id="showMemory">📚 View memory</button>
-    <button class="secondary" id="speak">🔊 Read last reply</button>
-    <button class="secondary" id="clear">Clear chat</button>
-  </div>
-  <div class="note"><strong>Privacy:</strong> Memories are stored only in this browser on this device. This starter does not send your messages to a server. Do not save passwords, OTPs, or private financial details.</div>
-  <footer>AYRA · Your Personal AI · Version 0.1</footer>
-</main>
+<header>
+<h2>AYRA</h2>
+<p>SMART • LOYAL • INTELLIGENT</p>
+</header>
+
+<div class="stage">
+ <div class="orbit"><div class="atom"></div></div>
+ <div class="orbit two"><div class="atom"></div></div>
+ <div class="orbit three"><div class="atom"></div></div>
+ <div class="core"></div>
+</div>
+
+<div id="chat">
+ <div class="msg bot">Hello! I am AYRA ❤️</div>
+</div>
+<div id="status">SYSTEM READY</div>
+
+<footer>
+ <button onclick="voiceInput()">🎙</button>
+ <input id="message" placeholder="Talk to AYRA...">
+ <button onclick="sendMessage()">➤</button>
+</footer>
+
 <script>
-const chat=document.getElementById('chat'), input=document.getElementById('message');
-let lastReply="హాయ్! నేను AYRA. మనం నెమ్మదిగా నన్ను build చేద్దాం.";
-function add(text,who='bot'){const d=document.createElement('div');d.className='msg '+who;d.textContent=text;chat.appendChild(d);chat.scrollTop=chat.scrollHeight;if(who==='bot')lastReply=text;}
-function memories(){try{return JSON.parse(localStorage.getItem('ayra_memories')||'[]')}catch(e){return []}}
-function reply(text){
- const t=text.toLowerCase();
- if(t.includes('hello')||t.includes('హాయ్')||t.includes('hi')) return 'హాయ్! ❤️ ఈ రోజు నీకు నేను ఎలా సహాయం చేయాలి?';
- if(t.includes('నీ పేరు')||t.includes('your name')) return 'నా పేరు AYRA. నేను నీ Smart & Loyal Personal AI Assistant అవ్వడానికి సిద్ధమవుతున్నాను.';
- if(t.includes('memory')||t.includes('గుర్తు')) return 'నీ memories చూడటానికి “View memory” నొక్కు. కొత్త విషయం save చేయడానికి “Save a memory” నొక్కు.';
- return 'నీ మాట నాకు అందింది: “'+text+'”\n\nఇది ప్రస్తుతం starter mode మాత్రమే. నిజమైన AI సమాధానాల కోసం తర్వాత online AI serviceని connect చేద్దాం.';
+const API_URL="https://ayra-ai.mrpro2182010.workers.dev/";
+const chat=document.getElementById("chat");
+const input=document.getElementById("message");
+const statusText=document.getElementById("status");
+
+function addMessage(text,type){
+ const d=document.createElement("div");
+ d.className="msg "+type;
+ d.textContent=text;
+ chat.appendChild(d);
+ chat.scrollTop=chat.scrollHeight;
 }
-function send(){const v=input.value.trim();if(!v)return;add(v,'user');input.value='';add(reply(v),'bot');}
-document.getElementById('send').onclick=send;input.addEventListener('keydown',e=>{if(e.key==='Enter')send()});
-document.getElementById('remember').onclick=()=>{const v=prompt('AYRA గుర్తుంచుకోవాల్సిన విషయం రాయండి:');if(v&&v.trim()){const m=memories();m.push({text:v.trim(),date:new Date().toLocaleDateString()});localStorage.setItem('ayra_memories',JSON.stringify(m));add('సరే! ఈ browserలో memory save చేశాను.','bot')}};
-document.getElementById('showMemory').onclick=()=>{const m=memories();add(m.length?'నీ saved memories:\n'+m.map((x,i)=>(i+1)+'. '+x.text).join('\n'):'ఇంకా memories save చేయలేదు.','bot')};
-document.getElementById('speak').onclick=()=>{if('speechSynthesis'in window){speechSynthesis.cancel();speechSynthesis.speak(new SpeechSynthesisUtterance(lastReply))}else alert('ఈ browserలో text-to-speech అందుబాటులో లేదు.')};
-document.getElementById('clear').onclick=()=>{chat.innerHTML='';add('Chat clear చేశాను. నీ saved memories మాత్రం అలాగే ఉంటాయి.','bot')};
-document.getElementById('mic').onclick=()=>{const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR){alert('ఈ browserలో voice input support లేదు. Chromeలో ప్రయత్నించు.');return;}const r=new SR();r.lang='te-IN';r.onresult=e=>{input.value=e.results[0][0].transcript;send()};r.onerror=()=>alert('Voice input పని చేయలేదు. Microphone permission check చేయి.');r.start()};
-if('serviceWorker'in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('./sw.js').catch(()=>{});
+
+async function sendMessage(){
+ const message=input.value.trim();
+ if(!message)return;
+ input.value="";
+ addMessage(message,"user");
+ statusText.textContent="AYRA IS THINKING...";
+
+ try{
+  const r=await fetch(API_URL,{
+   method:"POST",
+   headers:{"Content-Type":"application/json"},
+   body:JSON.stringify({message})
+  });
+  const data=await r.json();
+  if(!r.ok)throw new Error(data.error||"Request failed");
+  const reply=data.reply||"No reply received";
+  addMessage(reply,"bot");
+  if("speechSynthesis" in window){
+   speechSynthesis.cancel();
+   speechSynthesis.speak(new SpeechSynthesisUtterance(reply));
+  }
+  statusText.textContent="SYSTEM READY";
+ }catch(e){
+  addMessage("Connection error: "+e.message,"bot");
+  statusText.textContent="CONNECTION ERROR";
+ }
+}
+
+input.addEventListener("keydown",e=>{
+ if(e.key==="Enter")sendMessage();
+});
+
+function voiceInput(){
+ const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+ if(!SR){statusText.textContent="Voice not supported";return;}
+ const rec=new SR();
+ rec.lang="te-IN";
+ rec.onstart=()=>statusText.textContent="LISTENING...";
+ rec.onresult=e=>{
+  input.value=e.results[0][0].transcript;
+  sendMessage();
+ };
+ rec.onerror=()=>statusText.textContent="MICROPHONE ERROR";
+ rec.start();
+}
 </script>
-</body></html>
+</body>
+</html>
