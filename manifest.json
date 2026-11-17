@@ -1,0 +1,9 @@
+{
+  "name": "AYRA Personal AI",
+  "short_name": "AYRA",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#090b16",
+  "theme_color": "#090b16",
+  "description": "Your personal AI assistant starter"
+}
