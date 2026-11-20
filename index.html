@@ -8,9 +8,7 @@
 <title>AYRA - Personal AI</title>
 
 <style>
-* {
-  box-sizing: border-box;
-}
+* { box-sizing: border-box; }
 
 body {
   margin: 0;
@@ -51,15 +49,8 @@ header p {
   width: 95px;
   height: 95px;
   border-radius: 50%;
-  background: radial-gradient(
-    circle at 35% 30%,
-    #ffcccc,
-    #ff2929 35%,
-    #700000 75%
-  );
-  box-shadow:
-    0 0 25px #ff1717,
-    0 0 65px #a00000;
+  background: radial-gradient(circle at 35% 30%, #ffcccc, #ff2929 35%, #700000 75%);
+  box-shadow: 0 0 25px #ff1717, 0 0 65px #a00000;
   animation: pulse 2s infinite alternate;
   z-index: 2;
 }
@@ -154,8 +145,9 @@ body.listening .core {
   text-align: center;
   color: #ff4444;
   font-size: 11px;
-  letter-spacing: 2px;
+  letter-spacing: 1px;
   padding: 5px;
+  min-height: 25px;
 }
 
 footer {
@@ -194,7 +186,6 @@ button {
 button:disabled {
   opacity: .5;
 }
-
 </style>
 </head>
 
@@ -206,18 +197,9 @@ button:disabled {
 </header>
 
 <div class="stage">
-  <div class="orbit">
-    <div class="atom"></div>
-  </div>
-
-  <div class="orbit two">
-    <div class="atom"></div>
-  </div>
-
-  <div class="orbit three">
-    <div class="atom"></div>
-  </div>
-
+  <div class="orbit"><div class="atom"></div></div>
+  <div class="orbit two"><div class="atom"></div></div>
+  <div class="orbit three"><div class="atom"></div></div>
   <div class="core"></div>
 </div>
 
@@ -231,7 +213,7 @@ button:disabled {
 <div id="status">SYSTEM READY</div>
 
 <footer>
-  <button id="micBtn" onclick="voiceInput()">🎙</button>
+  <button id="micBtn" type="button">🎙</button>
 
   <input
     id="message"
@@ -240,11 +222,10 @@ button:disabled {
     autocomplete="off"
   >
 
-  <button id="sendBtn" onclick="sendMessage()">➤</button>
+  <button id="sendBtn" type="button">➤</button>
 </footer>
 
 <script>
-
 const API_URL =
 "https://ayra-ai.ganta-santhosh-218.workers.dev/";
 
@@ -252,8 +233,10 @@ const chat = document.getElementById("chat");
 const input = document.getElementById("message");
 const statusText = document.getElementById("status");
 const sendBtn = document.getElementById("sendBtn");
+const micBtn = document.getElementById("micBtn");
 
-let conversation = [];
+let recognition = null;
+let isListening = false;
 
 function setStatus(text, mode = "") {
   statusText.textContent = text;
@@ -262,38 +245,28 @@ function setStatus(text, mode = "") {
 
 function addMessage(text, type) {
   const div = document.createElement("div");
-
   div.className = "msg " + type;
   div.textContent = text;
-
   chat.appendChild(div);
   chat.scrollTop = chat.scrollHeight;
 }
 
 async function sendMessage() {
-
   const message = input.value.trim();
-
-  if (!message) return;
+  if (!message || sendBtn.disabled) return;
 
   input.value = "";
-
   addMessage(message, "user");
-
   setStatus("AYRA IS THINKING...", "thinking");
-
   sendBtn.disabled = true;
 
   try {
-
     const response = await fetch(API_URL, {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
       },
-      body: JSON.stringify({
-        message: message
-      })
+      body: JSON.stringify({ message })
     });
 
     const data = await response.json();
@@ -303,95 +276,114 @@ async function sendMessage() {
     }
 
     const reply = data.reply || "No reply received.";
-
     addMessage(reply, "bot");
-
     speak(reply);
-
     setStatus("SYSTEM READY");
 
   } catch (error) {
-
-    addMessage(
-      "Connection error: " + error.message,
-      "bot"
-    );
-
+    addMessage("Connection error: " + error.message, "bot");
     setStatus("CONNECTION ERROR");
-
   } finally {
-
     sendBtn.disabled = false;
-
   }
 }
 
 function speak(text) {
+  if (!("speechSynthesis" in window)) {
+    setStatus("VOICE OUTPUT NOT SUPPORTED");
+    return;
+  }
 
-  if (!("speechSynthesis" in window)) return;
-
-  speechSynthesis.cancel();
+  window.speechSynthesis.cancel();
 
   const speech = new SpeechSynthesisUtterance(text);
-
   speech.lang = "en-IN";
   speech.rate = 1;
   speech.pitch = 1;
 
-  speechSynthesis.speak(speech);
+  speech.onend = () => {
+    if (!isListening) setStatus("SYSTEM READY");
+  };
+
+  window.speechSynthesis.speak(speech);
 }
 
 function voiceInput() {
-
   const SpeechRecognition =
     window.SpeechRecognition ||
     window.webkitSpeechRecognition;
 
   if (!SpeechRecognition) {
-    setStatus("VOICE NOT SUPPORTED");
+    setStatus("VOICE NOT SUPPORTED IN THIS BROWSER");
     return;
   }
 
-  const recognition = new SpeechRecognition();
-
-  recognition.lang = "te-IN";
-  recognition.continuous = false;
-  recognition.interimResults = false;
-
-  recognition.onstart = () => {
-    setStatus("LISTENING...", "listening");
-  };
-
-  recognition.onresult = (event) => {
-
-    input.value =
-      event.results[0][0].transcript;
-
-    sendMessage();
-
-  };
-
-  recognition.onerror = () => {
-    setStatus("MICROPHONE ERROR");
-  };
-
-  recognition.onend = () => {
-    if (document.body.classList.contains("listening")) {
-      setStatus("SYSTEM READY");
-    }
-  };
-
-  recognition.start();
-}
-
-input.addEventListener("keydown", (event) => {
-
-  if (event.key === "Enter") {
-    sendMessage();
+  if (isListening && recognition) {
+    recognition.stop();
+    return;
   }
 
-});
+  try {
+    recognition = new SpeechRecognition();
 
+    recognition.lang = "te-IN";
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+
+    recognition.onstart = () => {
+      isListening = true;
+      micBtn.textContent = "⏹";
+      setStatus("LISTENING... SPEAK NOW", "listening");
+    };
+
+    recognition.onresult = (event) => {
+      const transcript = event.results[0][0].transcript;
+
+      if (transcript.trim()) {
+        input.value = transcript;
+        setStatus("VOICE RECEIVED");
+        recognition.stop();
+        sendMessage();
+      }
+    };
+
+    recognition.onerror = (event) => {
+      isListening = false;
+      micBtn.textContent = "🎙";
+      setStatus("MIC ERROR: " + event.error);
+    };
+
+    recognition.onnomatch = () => {
+      setStatus("VOICE NOT RECOGNIZED. TRY AGAIN");
+    };
+
+    recognition.onend = () => {
+      isListening = false;
+      micBtn.textContent = "🎙";
+
+      if (statusText.textContent === "LISTENING... SPEAK NOW") {
+        setStatus("LISTENING STOPPED. TAP MIC TO RETRY");
+      }
+
+      document.body.classList.remove("listening");
+    };
+
+    recognition.start();
+
+  } catch (error) {
+    isListening = false;
+    micBtn.textContent = "🎙";
+    setStatus("MIC START ERROR: " + error.message);
+  }
+}
+
+micBtn.addEventListener("click", voiceInput);
+sendBtn.addEventListener("click", sendMessage);
+
+input.addEventListener("keydown", (event) => {
+  if (event.key === "Enter") sendMessage();
+});
 </script>
 
 </body>
